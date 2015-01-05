@@ -1,3 +1,18 @@
+# a lot cribbed from http://howistart.org/posts/haskell/1
 *.*~
 */.cabal-sandbox/
+*/dist/
+*/cabal-dev
+*.o
+*.hi
+*.chi
+*.chs.h
+*/.virtualenv
+*/.hpc
+*/.hsenv
+*/cabal.sandbox.config
+*/cabal.config
+*.prof
+*.hp
+*.aux
 
