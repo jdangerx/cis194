@@ -3,7 +3,8 @@ module HW09 where
 import Control.Applicative
 import Ring
 import Test.QuickCheck
--- import BST
+import Test.HUnit
+import System.Random
 
 -- exercise 1
 instance Arbitrary Mod5 where
@@ -11,14 +12,9 @@ instance Arbitrary Mod5 where
 
 instance Arbitrary Mat2x2 where
   arbitrary = MkMat <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
-  -- arbitrary = do
-  --   x1 <- arbitrary
-  --   x2 <- arbitrary
-  --   x3 <- arbitrary
-  --   x4 <- arbitrary
-  --   return $ MkMat x1 x2 x3 x4
 
 -- exercise 2
+-- haha nope maybe later.
 
 -- exercise 3
 -- associativity of add
@@ -78,7 +74,7 @@ prop_ring a b c = singles .&&. doubles .&&. triples where
 -- additive and multiplicative id's
 
 -- Additionally the instance of Eq derived by Mod5 makes mkMod (-3) /=
--- mkMod 2 so I fixed it:
+-- mkMod 2.
 instance Eq Mod5 where
   (==) (MkMod m) (MkMod n) = m `mod` 5 == n `mod` 5
 
@@ -105,42 +101,45 @@ isBST :: Ord a => BST a -> Bool
 isBST = isBSTBetween Nothing Nothing
 
 -- exercise 7
-instance (Arbitrary a, Ord a) => Arbitrary (BST a) where
+instance (Arbitrary a, Ord a, Random a) => Arbitrary (BST a) where
   arbitrary = do
     bound1 <- arbitrary
-    bound2 <- arbitrary
-    case bound1 < bound2 of
-     True -> genBST bound1 bound2
-     False -> genBST bound2 bound1
+    bound2 <- suchThat arbitrary (> bound1)
+    genBST bound1 bound2
+
+genBST :: (Arbitrary a, Ord a, Random a) => a -> a -> Gen (BST a)
+genBST lower upper
+  | lower == upper = return Leaf
+  | otherwise = do
+      x <- choose (lower, upper)
+      frequency [ (1, return Leaf)
+                , (3, do
+                      left <- genBST lower x
+                      right <- genBST x upper
+                      return $ Node left x right)]
 
 
--- mk_tree :: Arbitrary a => Int -> Gen (BST a)
--- mk_tree 0 = return Leaf
--- mk_tree n = frequency [ (1, return Leaf)
---                       , (2, Node <$> mk_tree (n `div` 2)
---                                  <*> arbitrary
---                                  <*> mk_tree (n `div` 2)) ]
+-- exercise 9
+parserTests :: Test
+parserTests = TestList [ "Integer parsing positive" ~:
+                         parseAll "1" ~?= Just (1 :: Integer)
+                       , "Integer parsing negative" ~:
+                         parseAll "-1" ~?= Just ((-1) :: Integer)
+                       , "Integer parsing non-integer" ~:
+                         parseAll "a" ~?= (Nothing :: Maybe Integer)
+                       , "Mod5 parsing positive"~:
+                         parseAll "6" ~?= Just (MkMod 6)
+                       , "Mod5 parsing negative" ~:
+                         parseAll "-1" ~?= Just (MkMod 4)
+                       , "Mod5 parsing non-integer" ~:
+                         parseAll "5.4" ~?= (Nothing :: Maybe Mod5)
+                       , "Mat2x2 parsing" ~:
+                         parseAll "[[-1, 2][3, 4]]" ~?= Just (MkMat (-1) 2 3 4)
+                       , "Mat2x2 3 elements should fail" ~:
+                         parseAll "[[-1, 2][3]]" ~?= (Nothing :: Maybe Mat2x2)
+                       , "Bool parsing" ~:
+                         parseAll "True" ~?= Just True
+                       , "Bool non-bool value should fail" ~:
+                         parseAll "1" ~?= (Nothing :: Maybe Bool)
+                        ]
 
-genBST :: (Arbitrary a, Ord a) => a -> a -> Gen (BST a)
-genBST lower upper = do
-  isLeaf <- arbitrary
-  case isLeaf of
-   True -> return Leaf
-   False -> do
-     x <- arbitrary
-     left <- genBST lower x
-     right <- genBST x upper
-     return $ Node left x right
-
--- genBST :: (Arbitrary a, Ord a) => a -> a -> Gen (BST a)
--- genBST lower upper = do
---   isLeaf <- arbitrary
---   case isLeaf of
---    True -> return Leaf
---    False -> do
---      x <- arbitrary
---      left <- genBST lower x
---      right <- genBST x upper
---      return $ Node left x right
-  
-       
