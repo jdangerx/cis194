@@ -116,14 +116,12 @@ render (World { w_opp = o,
                 w_player = p,
                 w_ball = b,
                 w_pscore = pscore,
-                w_oscore = oscore,
-                w_state = s })
+                w_oscore = oscore})
   = renderFrame <> renderBall b <> renderPaddle o <> renderPaddle p <>
     renderScores pscore oscore
 
 react :: Event -> World -> World
-react ev w@(World { w_player = p,
-                    w_state = state})
+react ev w@(World { w_player = p })
   = case ev of
      EventKey (SpecialKey KeyUp) Down _ _ ->
        w { w_player = p {pad_vel = (0, playerSpeed)} }
@@ -150,12 +148,12 @@ tryMovePaddle elapsed p@(Paddle {pad_height = h,
                -- (x' - padWidth >= winLeft) && (x' + padWidth <= winRight)
 
 tryMoveBall :: Float -> World -> Ball
-tryMoveBall elapsed w@(World {w_opp = o@(Paddle {pad_loc = (ox, oy)}),
-                              w_player = p@(Paddle {pad_loc = (px, py)}),
-                              w_ball = b@(Ball {ball_rad = r,
-                                                ball_loc = (x, y),
-                                                ball_vel = (vx, vy)})
-                             })
+tryMoveBall elapsed (World {w_opp = o@(Paddle {pad_loc = (ox, oy)}),
+                            w_player = p@(Paddle {pad_loc = (px, py)}),
+                            w_ball = b@(Ball {ball_rad = r,
+                                              ball_loc = (x, y),
+                                              ball_vel = (vx, vy)})
+                           })
   | collidedY = b {ball_vel = (vx, -vy)}
   | collidedOpp = collideBallPaddle b o
   | collidedPlayer = collideBallPaddle b p
@@ -173,16 +171,15 @@ tryMoveBall elapsed w@(World {w_opp = o@(Paddle {pad_loc = (ox, oy)}),
 
 
 collideBallPaddle :: Ball -> Paddle -> Ball
-collideBallPaddle b@(Ball {ball_loc = (bx, by),
+collideBallPaddle b@(Ball {ball_loc = (_, by),
                            ball_vel = (bvx, bvy)})
-                  p@(Paddle {pad_loc = (px, py),
-                             pad_vel = (pvx, pvy)})
+                  (Paddle {pad_loc = (_, py)})
   = b {ball_vel = (-bvx, bvy + (by - py) * 5)}
 
 step :: Float -> World -> World
-step elapsed w@(World {w_opp = o@(Paddle {pad_loc = (ox, oy)}),
+step elapsed w@(World {w_opp = o@(Paddle {pad_loc = (_, oy)}),
                        w_player = p,
-                       w_ball = b@(Ball {ball_loc = (bx, by)}),
+                       w_ball = (Ball {ball_loc = (bx, by)}),
                        w_pscore = pscore,
                        w_oscore = oscore,
                        w_state = Playing})
@@ -196,9 +193,9 @@ step elapsed w@(World {w_opp = o@(Paddle {pad_loc = (ox, oy)}),
                    w_ball = tryMoveBall elapsed w}
   where
     oppVel
-      | by > oy = (0, opponentSpeed)
-      | by < oy = (0, -opponentSpeed)
-      | otherwise = (0, 0)
+      | by - oy > opponentSpeed/10 = (0, opponentSpeed)
+      | oy - by > opponentSpeed/10 = (0, -opponentSpeed)
+      | otherwise = (0, by - oy)
 step _ w = w
 
 main :: IO()
