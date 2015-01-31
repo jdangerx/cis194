@@ -1,0 +1,3 @@
+HUnit -any
+cabal-install -any
+quickcheck -any

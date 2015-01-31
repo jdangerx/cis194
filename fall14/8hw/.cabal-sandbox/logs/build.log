@@ -1,0 +1,41 @@
+
+package: MonadRandom-0.3
+os: linux
+arch: x86_64
+compiler: ghc-7.8.3
+client: cabal-install-1.20.0.3
+dependencies: transformers-0.4.2.0 random-1.1 mtl-2.2.1
+              base-4.7.0.1
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried
+
+package: mtl-2.2.1
+os: linux
+arch: x86_64
+compiler: ghc-7.8.3
+client: cabal-install-1.20.0.3
+dependencies: transformers-0.4.2.0 base-4.7.0.1
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried
+
+package: random-1.1
+os: linux
+arch: x86_64
+compiler: ghc-7.8.3
+client: cabal-install-1.20.0.3
+dependencies: time-1.4.2 base-4.7.0.1
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried
+
+package: transformers-0.4.2.0
+os: linux
+arch: x86_64
+compiler: ghc-7.8.3
+client: cabal-install-1.20.0.3
+dependencies: base-4.7.0.1
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried
