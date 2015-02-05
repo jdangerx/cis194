@@ -67,19 +67,59 @@ instance Functor Parser where
 
 
 -- exercise 2: make an Applicative instance of Parser
-second :: (b -> c) -> (a, b) -> (a, c)
-second f pair = (fst pair, f . snd $ pair)
 
--- instance Applicative Parser where
---   pure a = Parser (\ s -> Just (a, s))
---   p1@(Parser f1) <*> p2@(Parser f2) = Parser (_ <*> f2)
+instance Applicative Parser where
+  pure a = Parser (\ s -> Just (a, s))
+  (Parser f1) <*> (Parser f2) = Parser f
+    where
+      f [] = Nothing
+      f s = case f1 s of
+              Nothing -> Nothing
+              Just (fab, s') -> first fab <$> f2 s'
 
-  -- p1 :: Parser (a -> b) == Parser (String -> Maybe (a -> b, String))
-  -- p2 :: Parser a == Parser (String -> Maybe (a, String))
-  -- result :: Parser (String -> Maybe (b, String))
+-- exercise 3:
 
-  -- f1 :: String -> Maybe (a -> b, String)
-  -- f2 :: String -> Maybe (a, String)
-  -- f3 :: String -> Maybe (b, String)
+-- part 1: expects to see the chars 'a' and 'b' and returns ('a', 'b')
+-- basically we can lift (,) into the context of Parser Char
+abParser :: Parser (Char, Char)
+abParser = (,) <$> char 'a' <*> char 'b'
 
-  -- String -> Maybe (b, String)
+abParserWorks:: Bool
+abParserWorks = runParser abParser "abcd" == Just (('a', 'b'), "cd") &&
+                runParser abParser "acd" == Nothing &&
+                runParser abParser "bcd" == Nothing &&
+                runParser abParser "cdab" == Nothing
+
+
+-- part 2: returns () instead of ('a', 'b')
+-- we can replace (,) in abParser with function that takes 2 args and returns ()
+abParser_ :: Parser ()
+abParser_ = mkEmpty <$> char 'a' <*> char 'b'
+  where mkEmpty _ _ = ()
+
+abParser_Works:: Bool
+abParser_Works = runParser abParser_ "abcd" == Just ((), "cd") &&
+                 runParser abParser_ "acd" == Nothing &&
+                 runParser abParser_ "bcd" == Nothing &&
+                 runParser abParser_ "cdab" == Nothing
+
+-- exercise 4: implement an Alternative instance for Parser since
+-- Maybe already has an Alternative instance, we can lift (<|>) into
+-- the (String ->) context and apply (<|>) to the Maybe (a, String) bits.
+instance Alternative Parser where
+  empty = Parser {runParser = pure Nothing}
+  (Parser f1) <|> (Parser f2) = Parser $ (<|>) <$> f1 <*> f2
+
+
+-- exercise 5:
+intOrUppercase :: Parser ()
+intOrUppercase = (mkEmpty <$> satisfy isUpper) <|> (mkEmpty <$> posInt)
+  where mkEmpty _ = ()
+
+intOrUppercaseWorks :: Bool
+intOrUppercaseWorks = runParser intOrUppercase "1abcd" == Just ((), "abcd") &&
+                      runParser intOrUppercase "Aabcd" == Just ((), "abcd") &&
+                      runParser intOrUppercase "abcd" == Nothing &&
+                      runParser intOrUppercase "a1bcd" == Nothing &&
+                      runParser intOrUppercase "aAbcd" == Nothing
+                      
