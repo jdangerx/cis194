@@ -1,21 +1,22 @@
+{-# LANGUAGE FlexibleInstances #-}
 module Calc where
 import ExprT
 import Parser
 import qualified Data.Map as M
 
--- 1
+-- Exercise 1
 eval :: ExprT -> Integer
 eval (Lit n) = n
 eval (Add a b) = eval a + eval b
 eval (Mul a b) = eval a * eval b
 
--- 2
+-- Exercise 2
 evalStr :: String -> Maybe Integer
 evalStr s = case parseExp Lit Add Mul s of
               Nothing -> Nothing
               Just expr -> Just (eval expr)
 
--- 3
+-- Exercise 3
 class Expr a where
     lit :: Integer -> a
     add :: a -> a -> a
@@ -26,7 +27,7 @@ instance Expr ExprT where
     add = Add
     mul = Mul
 
--- 4
+-- Exercise 4
 testExp :: Expr a => Maybe a
 testExp = parseExp lit add mul "(3 * -4) + 5"
 
@@ -52,7 +53,7 @@ instance Expr Mod7 where
     add (Mod7 x) (Mod7 y) = lit (x + y)
     mul (Mod7 x) (Mod7 y) = lit (x * y)
 
--- 6
+-- Exercise 6
 class HasVars a where
     var :: String -> a
 
@@ -69,4 +70,3 @@ instance Expr VarExprT where
 
 instance HasVars VarExprT where
     var = Var
-
