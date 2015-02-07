@@ -1,6 +1,6 @@
 module Week4 where
-import Data.List
--- 1
+
+-- Exercise 1
 fun1 :: [Integer] -> Integer
 fun1 [] = 1
 fun1 (x:xs)
@@ -11,7 +11,7 @@ fun1 (x:xs)
 -- so we can ignore all the odd elements, subtract 2 from everything, and
 -- multiply everything together
 fun1' :: [Integer] -> Integer
-fun1' = foldr1 (*) . map (+(-2)) . filter even
+fun1' = foldr1 (*) . map ((-) 2) . filter even
 
 fun2 :: Integer -> Integer
 fun2 1 = 0
@@ -22,11 +22,11 @@ fun2 n | even n = n + fun2 (n `div` 2)
 -- to our result if it's even - so we just generate the Collatz sequence,
 -- filter for even-ness, and then sum it
 fun2' :: Integer -> Integer
-fun2' = sum . filter even . takeWhile (\x -> x /= 1) .
+fun2' = sum . filter even . takeWhile (/= 1) .
         iterate (\n -> case even n of True -> n `div` 2
                                       False -> 3 * n + 1)
 
--- 2
+-- Exercise 2
 data Tree a = Leaf
             | Node Integer (Tree a) a (Tree a)
   deriving (Show, Eq)
@@ -46,15 +46,17 @@ treeInsert elt (Node h l c r)
 foldTree :: [a] -> Tree a
 foldTree = foldr treeInsert Leaf
 
--- 3.1
+-- Exercise 3.1
 xor :: [Bool] -> Bool
-xor = foldr (\x y -> if x then not y else y) False
+-- Start at False when we have seen 0 Trues. Then flip the result every
+-- time we see a True.
+xor = foldr (\val acc -> if val then not acc else acc) False
 
--- 3.2
+-- Exercise 3.2
 map' :: (a -> b) -> [a] -> [b]
 map' f xs = foldr (\x y -> f x : y) [] xs
 
--- 4
+-- Exercise 4
 sieveTsundere :: Integer -> [Integer]
 sieveTsundere n = map ((+1) . (*2)) $ filter (`notElem` badNums) [1..n] where
     badNums = [x + y + 2*x*y | x <- [1..n], y <- [1..n], x+y+2*x*y <= n]
