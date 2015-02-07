@@ -1,0 +1,2 @@
+-- check out ../fall14/7hw for the laziness homework. The two versions
+-- are basically the same.
