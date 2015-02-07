@@ -13,10 +13,23 @@ import Data.Char (isSpace, isAlpha, isAlphaNum)
 ------------------------------------------------------------
 
 zeroOrMore :: Parser a -> Parser [a]
-zeroOrMore p = oneOrMore p <|> pure []
+zeroOrMore p = (:) <$> p <*> zeroOrMore p <|> pure []
+
+zeroOrMoreWorks :: Bool
+zeroOrMoreWorks = runOn "" == Just ("", "") &&
+                  runOn "a" == Just ("a", "") &&
+                  runOn "aaa" == Just ("aaa", "") &&
+                  runOn "aaab" == Just ("aaa", "b")
+  where runOn = runParser $ zeroOrMore (char 'a')
 
 oneOrMore :: Parser a -> Parser [a]
-oneOrMore p = (:) <$> p <*> (oneOrMore p <|> (:[]) <$> p)
+oneOrMore p = (:) <$> p <*> zeroOrMore p
+
+oneOrMoreWorks :: Bool
+oneOrMoreWorks = runOn "" == Nothing &&
+                 runOn "ab" == Just ("a", "b") &&
+                 runOn "aaab" == Just ("aaa", "b")
+  where runOn = runParser $ oneOrMore (char 'a')
 
 ------------------------------------------------------------
 --  2. Utilities
@@ -25,8 +38,21 @@ oneOrMore p = (:) <$> p <*> (oneOrMore p <|> (:[]) <$> p)
 spaces :: Parser String
 spaces = zeroOrMore (satisfy isSpace)
 
+spacesWorks :: Bool
+spacesWorks = runOn "" == Just ("", "") &&
+              runOn "aaa" == Just ("", "aaa") &&
+              runOn "  aaa" == Just ("  ", "aaa")
+  where runOn = runParser spaces
+
 ident :: Parser String
 ident = (:) <$> (satisfy isAlpha) <*> (oneOrMore (satisfy isAlphaNum))
+
+identWorks :: Bool
+identWorks = runOn "" == Nothing &&
+             runOn "aaa" == Just ("aaa", "") &&
+             runOn "123" == Nothing &&
+             runOn "aaa123 second" == Just ("aaa123", " second")
+  where runOn = runParser ident
 
 ------------------------------------------------------------
 --  3. Parsing S-expressions
@@ -45,3 +71,13 @@ data Atom = N Integer | I Ident
 data SExpr = A Atom
            | Comb [SExpr]
   deriving Show
+
+
+parseAtom :: Parser Atom
+parseAtom = spaces *> (N <$> posInt) <|> (I <$> ident) <* spaces
+
+parseList :: Parser [SExpr]
+parseList = spaces *> char '(' *> (oneOrMore parseSExpr) <* spaces <* char ')'
+
+parseSExpr :: Parser SExpr
+parseSExpr = (A <$> parseAtom) <|> (Comb <$> parseList)
